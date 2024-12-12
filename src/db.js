@@ -70,8 +70,8 @@ const db = new sqlite.Database(dbPath, (err) => {
 
 function addData(data) {
     return new Promise((resolve, reject) => {
-            console.log(chalk.blue('Adding data to database...'));
-            const processedData = processData(data);
+        console.log(chalk.blue('Adding data to database...'));
+        const processedData = processData(data);
 
         const sql = `
             INSERT INTO stats (
@@ -134,7 +134,7 @@ function addData(data) {
                 ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
             )
         `;
-    
+
         const params = [
             processedData.id,
             processedData.nickname,
@@ -190,7 +190,7 @@ function addData(data) {
             processedData.overallCounters.AmmoUsed,
             processedData.overallCounters.CombatDamage
         ];
-    
+
         db.run(sql, params, function(err) {
             if (err) {
                 console.error('Error inserting data:', err);
@@ -360,3 +360,98 @@ module.exports = {
     getData,
     validColumns
 };
+
+
+
+
+
+
+// const sqlite = require('sqlite3').verbose();
+// const path = require('path');
+// const dbPath = path.resolve(__dirname, './data/db.sqlite');
+// const chalk = require('chalk');
+
+// const db = new sqlite.Database(dbPath, (err) => {
+//     if (err) {
+//         console.error(err.message);
+//         return;
+//     }
+//     console.log(chalk.blue('Connected to the database.'));
+
+//     // Create minimal initial table structure
+//     db.run(`CREATE TABLE IF NOT EXISTS stats (
+//         id INTEGER PRIMARY KEY AUTOINCREMENT,
+//         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+//         player_id TEXT,
+//         nickname TEXT
+//     )`);
+// });
+
+// function addColumn(columnName, columnType = 'INTEGER') {
+//     return new Promise((resolve, reject) => {
+//         db.run(`ALTER TABLE stats ADD COLUMN ${columnName} ${columnType};`, (err) => {
+//             if (err) {
+//                 // Column might already exist, which is fine
+//                 if (err.message.includes('duplicate column name')) {
+//                     resolve();
+//                 } else {
+//                     reject(err);
+//                 }
+//             } else {
+//                 resolve();
+//             }
+//         });
+//     });
+// }
+
+// function addData(data) {
+//     return new Promise(async (resolve, reject) => {
+//         const processedData = processData(data);
+        
+//         // Get current table info
+//         db.all("PRAGMA table_info(stats);", async (err, columns) => {
+//             if (err) return reject(err);
+
+//             // Add any missing columns
+//             for (const [key, value] of Object.entries(processedData)) {
+//                 if (!columns.find(col => col.name === key)) {
+//                     const type = typeof value === 'number' ? 'INTEGER' : 'TEXT';
+//                     await addColumn(key, type);
+//                 }
+//             }
+
+//             // Build dynamic INSERT query
+//             const keys = Object.keys(processedData);
+//             const placeholders = keys.map(() => '?').join(',');
+//             const sql = `INSERT INTO stats (${keys.join(',')}) VALUES (${placeholders})`;
+            
+//             db.run(sql, Object.values(processedData), function(err) {
+//                 if (err) reject(err);
+//                 else resolve();
+//             });
+//         });
+//     });
+// }
+
+// function getData(columns = ['*'], conditions = {}) {
+//     return new Promise((resolve, reject) => {
+//         const where = Object.keys(conditions).length ? 
+//             'WHERE ' + Object.entries(conditions)
+//                 .map(([k, v]) => `${k} = ?`)
+//                 .join(' AND ') : '';
+                
+//         const sql = `SELECT ${columns.join(',')} FROM stats ${where}`;
+        
+//         db.all(sql, Object.values(conditions), (err, rows) => {
+//             if (err) reject(err);
+//             else resolve(rows);
+//         });
+//     });
+// }
+
+// module.exports = {
+//     db,
+//     addData,
+//     addColumn,
+//     getData
+// };
