@@ -289,140 +289,102 @@ const validColumns = [
 
 function getData(body) {
     return new Promise((resolve, reject) => {
-        const requestedStats = Array.isArray(body.stat) ? body.stat : [body.stat];
-
-        const invalidStats = requestedStats.filter(stat => !validColumns.includes(stat));
-        if (invalidStats.length > 0) {
-            reject(new Error(`Invalid stats: ${invalidStats.join(', ')}`));
-            return;
-        }
-
-        const sql = requestedStats
-            .map(stat => `
-                SELECT 
-                    strftime('%d-%m-%Y', date) as date,
-                    '${stat}' as stat_name,
-                    AVG(${stat}) as value
-                FROM stats
-                WHERE 
-                    date BETWEEN datetime(?, 'start of day') AND datetime(?, '23:59:59')
-                    AND ${stat} IS NOT NULL
-                GROUP BY strftime('%d-%m-%Y', date), stat_name
-            `).join(' UNION ALL ') + ' ORDER BY date ASC, stat_name ASC';
-
-        const params = requestedStats.reduce((acc, _) => [
-            ...acc,
-            body.startDate || '1970-01-01',
-            body.endDate || new Date().toISOString().split('T')[0]
-        ], []);
-
-        db.all(sql, params, (err, rows) => {
-            if (err) {
-                reject(err);
-                return;
+        try {
+            if (!body.stat) {
+                throw new Error('stat parameter is required');
             }
 
-            // Transform data for ECharts
-            const dates = [...new Set(rows.map(row => row.date))];
-            const stats = [...new Set(rows.map(row => row.stat_name))];
-            
-            const series = stats.map(stat => {
-                const statData = dates.map(date => {
-                    const row = rows.find(r => r.date === date && r.stat_name === stat);
-                    return row ? row.value : 0;
-                });
-                
-                return {
-                    name: stat,
-                    type: 'line',
-                    stack: 'Total',
-                    data: statData
-                };
+            const requestedStats = Array.isArray(body.stat) ? body.stat : [body.stat];
+            const startDate = body.startDate || '1970-01-01';
+            const endDate = body.endDate || new Date().toISOString().split('T')[0];
+
+            if (!isValidDate(startDate) || !isValidDate(endDate)) {
+                throw new Error('Invalid date format. Use YYYY-MM-DD');
+            }
+
+            requestedStats.forEach(stat => {
+                if (!validColumns.includes(stat)) {
+                    throw new Error(`Invalid stat: ${stat}`);
+                }
             });
-            resolve(series);
-        });
+
+            const sql = `
+                SELECT 
+                    datetime(date) as datetime,
+                    nickname as player_name,
+                    ${requestedStats.map(stat => `MAX(${stat}) as ${stat}`).join(', ')}
+                FROM stats
+                WHERE datetime(date) BETWEEN datetime(?) AND datetime(?)
+                    AND nickname IS NOT NULL
+                GROUP BY datetime(date), nickname
+                ORDER BY datetime(date) ASC, nickname ASC
+            `;
+
+            const params = [`${startDate} 00:00:00`, `${endDate} 23:59:59`];
+
+            db.all(sql, params, (err, rows) => {
+                if (err) {
+                    console.error('Query error:', err);
+                    reject(err);
+                    return;
+                }
+
+                if (!rows || rows.length === 0) {
+                    resolve({
+                        xAxis: {
+                            type: "category",
+                            boundaryGap: false,
+                            data: []
+                        },
+                        legend: { data: [] },
+                        series: []
+                    });
+                    return;
+                }
+
+                const formatDateTime = (datetime) => {
+                    const date = new Date(datetime);
+                    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}-${String(date.getHours()).padStart(2, '0')}:00`;
+                };
+
+                const datetimes = [...new Set(rows.map(row => formatDateTime(row.datetime)))];
+                const playerNames = [...new Set(rows.map(row => row.player_name))];
+
+                const series = requestedStats.flatMap(stat => 
+                    playerNames.map(playerName => {
+                        const playerData = rows.filter(row => row.player_name === playerName)
+                            .reduce((acc, row) => {
+                                acc[formatDateTime(row.datetime)] = row[stat];
+                                return acc;
+                            }, {});
+
+                        return {
+                            name: `${playerName} - ${stat}`,
+                            data: datetimes.map(datetime => playerData[datetime] || 0)
+                        };
+                    })
+                );
+
+                resolve({
+                    xAxis: {
+                        type: "category",
+                        boundaryGap: false,
+                        data: datetimes
+                    },
+                    legend: { data: series.map(s => s.name) },
+                    series: series
+                });
+            });
+        } catch (error) {
+            console.error('Error:', error);
+            reject(error);
+        }
     });
 }
 
-// const option = {
-//         title: {
-//     text: 'Stacked Line'
-//     },
-//     tooltip: {
-//         trigger: 'axis'
-//     },
-//     legend: {
-//         data: ['Email', 'Union Ads', 'Video Ads', 'Direct', 'Search Engine']
-//     },
-//     grid: {
-//         left: '3%',
-//         right: '4%',
-//         bottom: '3%',
-//         containLabel: true
-//     },
-//     toolbox: {
-//         feature: {
-//         saveAsImage: {}
-//         }
-//     },
-//     xAxis: {
-//         type: 'category',
-//         boundaryGap: false,
-//         data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-//     },
-//     yAxis: {
-//         type: 'value'
-//     },
-//     series: [
-//         {
-//         name: 'Email',
-//         type: 'line',
-//         stack: 'Total',
-//         data: [120, 132, 101, 134, 90, 230, 210]
-//         },
-//         {
-//         name: 'Union Ads',
-//         type: 'line',
-//         stack: 'Total',
-//         data: [220, 182, 191, 234, 290, 330, 310]
-//         },
-//         {
-//         name: 'Video Ads',
-//         type: 'line',
-//         stack: 'Total',
-//         data: [150, 232, 201, 154, 190, 330, 410]
-//         },
-//         {
-//         name: 'Direct',
-//         type: 'line',
-//         stack: 'Total',
-//         data: [320, 332, 301, 334, 390, 330, 320]
-//         },
-//         {
-//         name: 'Search Engine',
-//         type: 'line',
-//         stack: 'Total',
-//         data: [820, 932, 901, 934, 1290, 1330, 1320]
-//         }
-//     ]
-//     }; 
-
-// Multiple stats
-// {
-//     "stat": ["exp", "Kills", "Deaths"]
-// }
-
-// Optional date range
-// {
-//     "stat": ["exp", "Kills", "Deaths"],
-//     "startDate": "2024-01-01",
-//     "endDate": "2024-03-01"
-// }
-
-// Single stat (current format) still works
-// {
-//     "stat": "exp"
-// }
+function isValidDate(date) {
+    return /^\d{4}-\d{2}-\d{2}$/.test(date);
+}
 
 module.exports = {
     db,
@@ -431,98 +393,3 @@ module.exports = {
     getData,
     validColumns
 };
-
-
-
-
-
-
-// const sqlite = require('sqlite3').verbose();
-// const path = require('path');
-// const dbPath = path.resolve(__dirname, './data/db.sqlite');
-// const chalk = require('chalk');
-
-// const db = new sqlite.Database(dbPath, (err) => {
-//     if (err) {
-//         console.error(err.message);
-//         return;
-//     }
-//     Debug.log(chalk.blue('Connected to the database.'));
-
-//     // Create minimal initial table structure
-//     db.run(`CREATE TABLE IF NOT EXISTS stats (
-//         id INTEGER PRIMARY KEY AUTOINCREMENT,
-//         timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-//         player_id TEXT,
-//         nickname TEXT
-//     )`);
-// });
-
-// function addColumn(columnName, columnType = 'INTEGER') {
-//     return new Promise((resolve, reject) => {
-//         db.run(`ALTER TABLE stats ADD COLUMN ${columnName} ${columnType};`, (err) => {
-//             if (err) {
-//                 // Column might already exist, which is fine
-//                 if (err.message.includes('duplicate column name')) {
-//                     resolve();
-//                 } else {
-//                     reject(err);
-//                 }
-//             } else {
-//                 resolve();
-//             }
-//         });
-//     });
-// }
-
-// function addData(data) {
-//     return new Promise(async (resolve, reject) => {
-//         const processedData = processData(data);
-        
-//         // Get current table info
-//         db.all("PRAGMA table_info(stats);", async (err, columns) => {
-//             if (err) return reject(err);
-
-//             // Add any missing columns
-//             for (const [key, value] of Object.entries(processedData)) {
-//                 if (!columns.find(col => col.name === key)) {
-//                     const type = typeof value === 'number' ? 'INTEGER' : 'TEXT';
-//                     await addColumn(key, type);
-//                 }
-//             }
-
-//             // Build dynamic INSERT query
-//             const keys = Object.keys(processedData);
-//             const placeholders = keys.map(() => '?').join(',');
-//             const sql = `INSERT INTO stats (${keys.join(',')}) VALUES (${placeholders})`;
-            
-//             db.run(sql, Object.values(processedData), function(err) {
-//                 if (err) reject(err);
-//                 else resolve();
-//             });
-//         });
-//     });
-// }
-
-// function getData(columns = ['*'], conditions = {}) {
-//     return new Promise((resolve, reject) => {
-//         const where = Object.keys(conditions).length ? 
-//             'WHERE ' + Object.entries(conditions)
-//                 .map(([k, v]) => `${k} = ?`)
-//                 .join(' AND ') : '';
-                
-//         const sql = `SELECT ${columns.join(',')} FROM stats ${where}`;
-        
-//         db.all(sql, Object.values(conditions), (err, rows) => {
-//             if (err) reject(err);
-//             else resolve(rows);
-//         });
-//     });
-// }
-
-// module.exports = {
-//     db,
-//     addData,
-//     addColumn,
-//     getData
-// };

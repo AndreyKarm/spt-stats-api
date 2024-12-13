@@ -14,7 +14,11 @@ const spt = require('./spt.js');
 
 // 0 0 * * * means every day at midnight
 // * * * * * means every minute
-cron.schedule('* * * * *', async () => {
+cron.schedule('0 * * * *', async () => {
+    saveStats();
+});
+
+async function saveStats() {
     try {
         const timeStart = new Date();
         Debug.log(chalk.green('Running cron job at ' + timeStart));
@@ -44,7 +48,7 @@ cron.schedule('* * * * *', async () => {
     } catch (err) {
         console.error('Fatal error in cron job:', err.message);
     }
-});
+}
 
 app.post('/data', (req, res) => {
     try {
@@ -57,6 +61,7 @@ app.post('/data', (req, res) => {
         }
         db.getData(req.body)
             .then(data => {
+                console.log('Data:', data);
                 res.json(data);
             })
             .catch(err => {

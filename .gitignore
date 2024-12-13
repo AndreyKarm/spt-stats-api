@@ -1,4 +1,10 @@
 node_modules
 .env
 temp
+
+# SQLite database files
+*.sqlite
+*.sqlite3
+*.db
 src/data/db.sqlite
+src/data/*.sqlite
