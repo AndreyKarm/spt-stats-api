@@ -1,6 +1,7 @@
 const sqlite = require('sqlite3').verbose();
 const path = require('path');
 const dbPath = path.resolve(__dirname, './data/db.sqlite');
+const Debug = require('./helper/log.js');
 const chalk = require('chalk');
 
 const db = new sqlite.Database(dbPath, (err) => {
@@ -8,7 +9,7 @@ const db = new sqlite.Database(dbPath, (err) => {
         console.error(err.message);
         return;
     }
-    console.log(chalk.blue('Connected to the database.'));
+    Debug.log(chalk.blue('Connected to the database.'));
 
     db.run(`CREATE TABLE IF NOT EXISTS stats (
         date TIMESTAMP,
@@ -70,7 +71,7 @@ const db = new sqlite.Database(dbPath, (err) => {
 
 function addData(data) {
     return new Promise((resolve, reject) => {
-        console.log(chalk.blue('Adding data to database...'));
+        Debug.log(chalk.blue('Adding data to database...'));
         const processedData = processData(data);
 
         const sql = `
@@ -140,55 +141,55 @@ function addData(data) {
             processedData.nickname,
             processedData.exp,
             processedData.totalInGameTime,
-            processedData.overallCounters.CurrentWinStreak,
-            processedData.overallCounters.Sessions,
-            processedData.overallCounters.ExitStatus,
-            processedData.overallCounters.LifeTime,
-            processedData.overallCounters.Kills,
-            processedData.overallCounters.Deaths,
-            processedData.overallCounters.KilledBear,
-            processedData.overallCounters.KilledUsec,
-            processedData.overallCounters.KilledSavage,
-            processedData.overallCounters.KilledPmc,
-            processedData.overallCounters.KilledBoss,
-            processedData.overallCounters.KilledWithKnife,
-            processedData.overallCounters.KilledWithPistol,
-            processedData.overallCounters.KilledWithSmg,
-            processedData.overallCounters.KilledWithShotgun,
-            processedData.overallCounters.KilledWithAssaultRifle,
-            processedData.overallCounters.KilledWithAssaultCarbine,
-            processedData.overallCounters.KilledWithGrenadeLauncher,
-            processedData.overallCounters.KilledWithMachineGun,
-            processedData.overallCounters.KilledWithMarksmanRifle,
-            processedData.overallCounters.KilledWithSniperRifle,
-            processedData.overallCounters.KilledWithSpecialWeapon,
-            processedData.overallCounters.KilledWithThrowWeapon,
-            processedData.overallCounters.KilledWithTripwires,
-            processedData.overallCounters.HeadShots,
-            processedData.overallCounters.BloodLoss,
-            processedData.overallCounters.BodyPartsDestroyed,
-            processedData.overallCounters.Heal,
-            processedData.overallCounters.Fractures,
-            processedData.overallCounters.Contusions,
-            processedData.overallCounters.Dehydrations,
-            processedData.overallCounters.Exhaustions,
-            processedData.overallCounters.Medicines,
-            processedData.overallCounters.BodiesLooted,
-            processedData.overallCounters.SafeLooted,
-            processedData.overallCounters.Weapons,
-            processedData.overallCounters.Ammunitions,
-            processedData.overallCounters.Mods,
-            processedData.overallCounters.ThrowWeapons,
-            processedData.overallCounters.SpecialItems,
-            processedData.overallCounters.BartItems,
-            processedData.overallCounters.CauseBodyDamage,
-            processedData.overallCounters.CauseArmorDamage,
-            processedData.overallCounters.HitCount,
-            processedData.overallCounters.MoneyRUB,
-            processedData.overallCounters.MoneyEUR,
-            processedData.overallCounters.MoneyUSD,
-            processedData.overallCounters.AmmoUsed,
-            processedData.overallCounters.CombatDamage
+            processedData.CurrentWinStreak,
+            processedData.Sessions,
+            processedData.ExitStatus,
+            processedData.LifeTime,
+            processedData.Kills,
+            processedData.Deaths,
+            processedData.KilledBear,
+            processedData.KilledUsec,
+            processedData.KilledSavage,
+            processedData.KilledPmc,
+            processedData.KilledBoss,
+            processedData.KilledWithKnife,
+            processedData.KilledWithPistol,
+            processedData.KilledWithSmg,
+            processedData.KilledWithShotgun,
+            processedData.KilledWithAssaultRifle,
+            processedData.KilledWithAssaultCarbine,
+            processedData.KilledWithGrenadeLauncher,
+            processedData.KilledWithMachineGun,
+            processedData.KilledWithMarksmanRifle,
+            processedData.KilledWithSniperRifle,
+            processedData.KilledWithSpecialWeapon,
+            processedData.KilledWithThrowWeapon,
+            processedData.KilledWithTripwires,
+            processedData.HeadShots,
+            processedData.BloodLoss,
+            processedData.BodyPartsDestroyed,
+            processedData.Heal,
+            processedData.Fractures,
+            processedData.Contusions,
+            processedData.Dehydrations,
+            processedData.Exhaustions,
+            processedData.Medicines,
+            processedData.BodiesLooted,
+            processedData.SafeLooted,
+            processedData.Weapons,
+            processedData.Ammunitions,
+            processedData.Mods,
+            processedData.ThrowWeapons,
+            processedData.SpecialItems,
+            processedData.BartItems,
+            processedData.CauseBodyDamage,
+            processedData.CauseArmorDamage,
+            processedData.HitCount,
+            processedData.MoneyRUB,
+            processedData.MoneyEUR,
+            processedData.MoneyUSD,
+            processedData.AmmoUsed,
+            processedData.CombatDamage
         ];
 
         db.run(sql, params, function(err) {
@@ -196,7 +197,7 @@ function addData(data) {
                 console.error('Error inserting data:', err);
                 reject(err);
             } else {
-                console.log('Data inserted successfully');
+                Debug.log(chalk.blue('Data inserted successfully'));
                 resolve();
             }
         });
@@ -205,63 +206,61 @@ function addData(data) {
 
 function processData(response) {
     const data = response.data;
-
+    // Debug.log(chalk.red(`Debug: ${JSON.stringify(data.pmcStats.eft.overAllCounters.Items)}`));
     const extractedData = {
         id: data.id,
         nickname: data.info.nickname,
         exp: data.info.experience,
         totalInGameTime: data.pmcStats.eft.totalInGameTime,
-        overallCounters: {
-            CurrentWinStreak: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "CurrentWinStreak"),
-            Sessions: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Sessions"),
-            ExitStatus: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "ExitStatus"),
-            LifeTime: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "LifeTime"),
-            Kills: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Kills"),
-            Deaths: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Deaths"),
-            KilledBear: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledBear"),
-            KilledUsec: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledUsec"),
-            KilledSavage: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledSavage"),
-            KilledPmc: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledPmc"),
-            KilledBoss: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledBoss"),
-            KilledWithKnife: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithKnife"),
-            KilledWithPistol: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithPistol"),
-            KilledWithSmg: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithSmg"),
-            KilledWithShotgun: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithShotgun"),
-            KilledWithAssaultRifle: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithAssaultRifle"),
-            KilledWithAssaultCarbine: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithAssaultCarbine"),
-            KilledWithGrenadeLauncher: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithGrenadeLauncher"),
-            KilledWithMachineGun: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithMachineGun"),
-            KilledWithMarksmanRifle: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithMarksmanRifle"),
-            KilledWithSniperRifle: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithSniperRifle"),
-            KilledWithSpecialWeapon: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithSpecialWeapon"),
-            KilledWithThrowWeapon: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithThrowWeapon"),
-            KilledWithTripwires: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithTripwires"),
-            HeadShots: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "HeadShots"),
-            BloodLoss: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "BloodLoss"),
-            BodyPartsDestroyed: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "BodyPartsDestroyed"),
-            Heal: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Heal"),
-            Fractures: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Fractures"),
-            Contusions: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Contusions"),
-            Dehydrations: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Dehydrations"),
-            Exhaustions: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Exhaustions"),
-            Medicines: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Medicines"),
-            BodiesLooted: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "BodiesLooted"),
-            SafeLooted: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "SafeLooted"),
-            Weapons: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Weapons"),
-            Ammunitions: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Ammunitions"),
-            Mods: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Mods"),
-            ThrowWeapons: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "ThrowWeapons"),
-            SpecialItems: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "SpecialItems"),
-            BartItems: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "BartItems"),
-            CauseBodyDamage: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "CauseBodyDamage"),
-            CauseArmorDamage: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "CauseArmorDamage"),
-            HitCount: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "HitCount"),
-            MoneyRUB: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "RUB"),
-            MoneyEUR: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "EUR"),
-            MoneyUSD: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "USD"),
-            AmmoUsed: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "AmmoUsed"),
-            CombatDamage: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "CombatDamage")
-        }
+        CurrentWinStreak: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "CurrentWinStreak"),
+        Sessions: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Sessions"),
+        ExitStatus: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "ExitStatus"),
+        LifeTime: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "LifeTime"),
+        Kills: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Kills"),
+        Deaths: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Deaths"),
+        KilledBear: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledBear"),
+        KilledUsec: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledUsec"),
+        KilledSavage: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledSavage"),
+        KilledPmc: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledPmc"),
+        KilledBoss: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledBoss"),
+        KilledWithKnife: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithKnife"),
+        KilledWithPistol: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithPistol"),
+        KilledWithSmg: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithSmg"),
+        KilledWithShotgun: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithShotgun"),
+        KilledWithAssaultRifle: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithAssaultRifle"),
+        KilledWithAssaultCarbine: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithAssaultCarbine"),
+        KilledWithGrenadeLauncher: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithGrenadeLauncher"),
+        KilledWithMachineGun: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithMachineGun"),
+        KilledWithMarksmanRifle: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithMarksmanRifle"),
+        KilledWithSniperRifle: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithSniperRifle"),
+        KilledWithSpecialWeapon: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithSpecialWeapon"),
+        KilledWithThrowWeapon: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithThrowWeapon"),
+        KilledWithTripwires: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "KilledWithTripwires"),
+        HeadShots: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "HeadShots"),
+        BloodLoss: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "BloodLoss"),
+        BodyPartsDestroyed: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "BodyPartsDestroyed"),
+        Heal: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Heal"),
+        Fractures: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Fractures"),
+        Contusions: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Contusions"),
+        Dehydrations: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Dehydrations"),
+        Exhaustions: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Exhaustions"),
+        Medicines: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Medicines"),
+        BodiesLooted: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "BodiesLooted"),
+        SafeLooted: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "SafeLooted"),
+        Weapons: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Weapons"),
+        Ammunitions: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Ammunitions"),
+        Mods: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "Mods"),
+        ThrowWeapons: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "ThrowWeapons"),
+        SpecialItems: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "SpecialItems"),
+        BartItems: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "BartItems"),
+        CauseBodyDamage: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "CauseBodyDamage"),
+        CauseArmorDamage: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "CauseArmorDamage"),
+        HitCount: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "HitCount"),
+        MoneyRUB: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "RUB"),
+        MoneyEUR: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "EUR"),
+        MoneyUSD: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "USD"),
+        AmmoUsed: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "AmmoUsed"),
+        CombatDamage: findCounterValue(data.pmcStats.eft.overAllCounters.Items, "CombatDamage")
     };
     return extractedData;
 }
@@ -301,16 +300,15 @@ function getData(body) {
         const sql = requestedStats
             .map(stat => `
                 SELECT 
-                    id,
-                    nickname,
-                    strftime('%d-%m-%Y-%H-00', date) as date, 
-                    ${stat} as value,
-                    '${stat}' as stat_name
+                    strftime('%d-%m-%Y', date) as date,
+                    '${stat}' as stat_name,
+                    AVG(${stat}) as value
                 FROM stats
                 WHERE 
                     date BETWEEN datetime(?, 'start of day') AND datetime(?, '23:59:59')
                     AND ${stat} IS NOT NULL
-            `).join(' UNION ALL ') + ' ORDER BY date ASC, id ASC, stat_name ASC';
+                GROUP BY strftime('%d-%m-%Y', date), stat_name
+            `).join(' UNION ALL ') + ' ORDER BY date ASC, stat_name ASC';
 
         const params = requestedStats.reduce((acc, _) => [
             ...acc,
@@ -320,21 +318,94 @@ function getData(body) {
 
         db.all(sql, params, (err, rows) => {
             if (err) {
-                console.error('Database error:', err);
                 reject(err);
-            } else {
-                const formattedRows = rows.map(row => ({
-                    id: row.id,
-                    nickname: row.nickname,
-                    date: row.date,
-                    value: Number(row.value),
-                    stat_name: row.stat_name
-                }));
-                resolve(formattedRows);
+                return;
             }
+
+            // Transform data for ECharts
+            const dates = [...new Set(rows.map(row => row.date))];
+            const stats = [...new Set(rows.map(row => row.stat_name))];
+            
+            const series = stats.map(stat => {
+                const statData = dates.map(date => {
+                    const row = rows.find(r => r.date === date && r.stat_name === stat);
+                    return row ? row.value : 0;
+                });
+                
+                return {
+                    name: stat,
+                    type: 'line',
+                    stack: 'Total',
+                    data: statData
+                };
+            });
+            resolve(series);
         });
     });
 }
+
+// const option = {
+//         title: {
+//     text: 'Stacked Line'
+//     },
+//     tooltip: {
+//         trigger: 'axis'
+//     },
+//     legend: {
+//         data: ['Email', 'Union Ads', 'Video Ads', 'Direct', 'Search Engine']
+//     },
+//     grid: {
+//         left: '3%',
+//         right: '4%',
+//         bottom: '3%',
+//         containLabel: true
+//     },
+//     toolbox: {
+//         feature: {
+//         saveAsImage: {}
+//         }
+//     },
+//     xAxis: {
+//         type: 'category',
+//         boundaryGap: false,
+//         data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+//     },
+//     yAxis: {
+//         type: 'value'
+//     },
+//     series: [
+//         {
+//         name: 'Email',
+//         type: 'line',
+//         stack: 'Total',
+//         data: [120, 132, 101, 134, 90, 230, 210]
+//         },
+//         {
+//         name: 'Union Ads',
+//         type: 'line',
+//         stack: 'Total',
+//         data: [220, 182, 191, 234, 290, 330, 310]
+//         },
+//         {
+//         name: 'Video Ads',
+//         type: 'line',
+//         stack: 'Total',
+//         data: [150, 232, 201, 154, 190, 330, 410]
+//         },
+//         {
+//         name: 'Direct',
+//         type: 'line',
+//         stack: 'Total',
+//         data: [320, 332, 301, 334, 390, 330, 320]
+//         },
+//         {
+//         name: 'Search Engine',
+//         type: 'line',
+//         stack: 'Total',
+//         data: [820, 932, 901, 934, 1290, 1330, 1320]
+//         }
+//     ]
+//     }; 
 
 // Multiple stats
 // {
@@ -376,7 +447,7 @@ module.exports = {
 //         console.error(err.message);
 //         return;
 //     }
-//     console.log(chalk.blue('Connected to the database.'));
+//     Debug.log(chalk.blue('Connected to the database.'));
 
 //     // Create minimal initial table structure
 //     db.run(`CREATE TABLE IF NOT EXISTS stats (

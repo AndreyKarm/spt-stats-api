@@ -1,13 +1,14 @@
 const pako = require('pako');
 require('dotenv').config();
 const chalk = require('chalk');
+const Debug = require('./helper/log.js');
 
 const ip = process.env.SPT_IP;
 const port = process.env.SPT_PORT;
 const endpoint = '/client/profile/view';
 
 async function requestData(sessionId, maxRetries = 3, initialDelay = 1000) {
-    console.log('Requesting data from SPT');
+    Debug.log(chalk.magenta('Requesting data from SPT'));
     let headers = {
         "Content-Type": "application/json",
         "Accept-Encoding": "deflate",
@@ -40,7 +41,7 @@ async function requestData(sessionId, maxRetries = 3, initialDelay = 1000) {
                 throw lastError;
             }
             const delay = initialDelay * Math.pow(2, attempt - 1);
-            console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
+            Debug.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
             await new Promise(resolve => setTimeout(resolve, delay));
         }
     }
@@ -64,6 +65,6 @@ async function ping() {
     throw new Error('Ping failed');
 }
 
-// console.log('requestData:', requestData("674b46c90001f7d99e7a0741"));
+// Debug.log('requestData:', requestData("674b46c90001f7d99e7a0741"));
 
 module.exports = { requestData, ping };

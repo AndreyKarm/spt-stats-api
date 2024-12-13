@@ -5,6 +5,8 @@ const cron = require('node-cron');
 const fs = require('fs');
 const chalk = require('chalk');
 
+const Debug = require('./helper/log.js');
+
 app.use(express.json());
 
 const db = require('./db.js');
@@ -12,9 +14,10 @@ const spt = require('./spt.js');
 
 // 0 0 * * * means every day at midnight
 // * * * * * means every minute
-cron.schedule('0 0 * * *', async () => {
+cron.schedule('* * * * *', async () => {
     try {
-        console.log(chalk.green('Running cron job at ' + new Date().toISOString()));
+        const timeStart = new Date();
+        Debug.log(chalk.green('Running cron job at ' + timeStart));
         
         const fileContent = fs.readFileSync('./list.json', 'utf8');
         const jsonData = JSON.parse(fileContent);
@@ -25,19 +28,19 @@ cron.schedule('0 0 * * *', async () => {
 
         for (const id of jsonData.ids) {
             try {
-                console.log(chalk.magenta('Processing id:', id));
+                Debug.log(chalk.magenta('Processing id:', id));
                 const data = await spt.requestData(id);
-                console.log(chalk.magenta('Received data for id:', id));
+                Debug.log(chalk.magenta('Received data for id:', id));
                 if (!data || !data.data) {
                     throw new Error(`Invalid response data for id: ${id}`);
                 }
                 await db.addData(data);
-                console.log(chalk.magenta('Successfully saved data for id:', id));
+                Debug.log(chalk.magenta('Successfully saved data for id:', id));
             } catch (err) {
                 console.error(`Failed to process id ${id}:`, err.message);
             }
         }
-        console.log(chalk.green('Cron job completed successfully'));
+        Debug.log(chalk.green(`Cron job completed successfully, time taken: ${new Date() - timeStart}ms`));
     } catch (err) {
         console.error('Fatal error in cron job:', err.message);
     }
@@ -67,10 +70,10 @@ app.post('/data', (req, res) => {
 });
 
 app.listen(process.env.WEBSERVER_PORT, () => {
-    console.log(chalk.yellow(`Server is running on port ${process.env.WEBSERVER_PORT}`));
+    Debug.log(chalk.yellow(`Server is running on port ${process.env.WEBSERVER_PORT}`));
 });
 
 spt.ping()
-    .then(result => console.log(chalk.gray('SPT is online'))
+    .then(result => Debug.log(chalk.gray('SPT is online'))
     )
     .catch(error => console.error('Ping failed:', error));
