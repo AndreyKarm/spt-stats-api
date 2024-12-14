@@ -4,7 +4,8 @@
   "main": "src/webserver.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npm i && nodemon ./src/webserber.js"
+    "start": "npm i && nodemon ./src/webserber.js",
+    "dev": "nodemon ./src/webserver.js"
   },
   "keywords": [],
   "author": "",
