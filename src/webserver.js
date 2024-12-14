@@ -4,6 +4,7 @@ require('dotenv').config();
 const cron = require('node-cron');
 const fs = require('fs');
 const chalk = require('chalk');
+const ip = require('ip');
 
 const Debug = require('./helper/log.js');
 
@@ -75,7 +76,7 @@ app.post('/data', (req, res) => {
 });
 
 app.listen(process.env.WEBSERVER_PORT, () => {
-    Debug.log(chalk.yellow(`Server is running on port ${process.env.WEBSERVER_PORT}`));
+    Debug.log(chalk.yellow(`Server is running on ${ip.address()}:${process.env.WEBSERVER_PORT}`));
 });
 
 spt.ping()
