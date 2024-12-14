@@ -5,16 +5,22 @@ const cron = require('node-cron');
 const fs = require('fs');
 const chalk = require('chalk');
 const ip = require('ip');
+const cors = require('cors');
 
 const Debug = require('./helper/log.js');
 
+const corsOptions = {
+    origin: ['https://spt.liotom.me'],
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 const db = require('./db.js');
 const spt = require('./spt.js');
 
-// 0 0 * * * means every day at midnight
-// * * * * * means every minute
 cron.schedule('0 * * * *', async () => {
     saveStats();
 });
