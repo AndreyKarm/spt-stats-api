@@ -5,18 +5,17 @@ const cron = require('node-cron');
 const fs = require('fs');
 const chalk = require('chalk');
 const ip = require('ip');
-const cors = require('cors');
+const cors = require('cors'); // You already have this in package.json
 
 const Debug = require('./helper/log.js');
 
-const corsOptions = {
-    origin: ['https://spt.liotom.me'],
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type']
-};
-
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
+
+const sslOptions = {
+    key: fs.readFileSync(process.env.SSL_KEY_PATH),
+    cert: fs.readFileSync(process.env.SSL_CERT_PATH)
+};
 
 const db = require('./db.js');
 const spt = require('./spt.js');
@@ -81,8 +80,8 @@ app.post('/data', (req, res) => {
     }
 });
 
-app.listen(process.env.WEBSERVER_PORT, () => {
-    Debug.log(chalk.yellow(`Server is running on ${ip.address()}:${process.env.WEBSERVER_PORT}`));
+https.createServer(sslOptions, app).listen(process.env.WEBSERVER_PORT, () => {
+    Debug.log(chalk.yellow(`HTTPS Server running on ${ip.address()}:${process.env.WEBSERVER_PORT}`));
 });
 
 spt.ping()
